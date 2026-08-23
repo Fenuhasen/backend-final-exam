@@ -7,7 +7,7 @@ const SubmissionController = {
         try {
             const submission: SubmissionDTO = req.body;
             const sub = await SubmissionService.createSubmission(submission);
-            res.status(201).json(sub);
+            res.status(201).json({ message: "Submission créée avec succès", submission: sub.rows[0] });
         } catch (error) {
             console.log(error);
             res.status(500).json({
@@ -17,7 +17,8 @@ const SubmissionController = {
     },
     async findAll(req: Request, res: Response){
         try {
-            res.json({message: "Submissions listes"})
+            const sub = (await SubmissionService.findAll()).rows;
+            res.status(200).json(sub);
         } catch (error) {
             console.log(error);
             res.status(500).json({
