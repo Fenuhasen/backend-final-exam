@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import pool from './config/db';
+import submissionRouter from './router/submissionRouter';
 
 dotenv.config();
 
@@ -10,6 +11,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use('/submissions', submissionRouter);
 
 app.get('/', async (req: Request, res: Response) => {
   try {
