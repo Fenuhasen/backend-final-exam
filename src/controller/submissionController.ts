@@ -17,7 +17,7 @@ const SubmissionController = {
     },
     async findAll(req: Request, res: Response){
         try {
-            const sub = (await SubmissionService.findAll()).rows;
+            const sub = (await SubmissionService.findAll());
             res.status(200).json(sub);
         } catch (error) {
             console.log(error);
