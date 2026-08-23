@@ -15,11 +15,11 @@ const SubmissionService = {
                         s.id_submission
                     );
                 return {
-                    id: s.id_submission,
-                    idExam: s.id_exam,
-                    idStudent: s.id_student,
-                    submittedAt: s.submitted_at,
-                    listItem: items.rows
+                    id_submission: s.id_submission,
+                    id_exam: s.id_exam,
+                    id_student: s.id_student,
+                    submitted_at: s.submitted_at,
+                    items: items.rows
                 };
             })
         );
