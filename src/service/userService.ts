@@ -1,0 +1,148 @@
+import { UserRepository } from '../repository/userRepository';
+import {
+  Student,
+  CreateStudentDTO,
+  UpdateStudentDTO,
+  UserRole
+} from '../model/user';
+
+export class UserService {
+
+  private userRepository: UserRepository;
+
+  constructor() {
+    this.userRepository = new UserRepository();
+  }
+
+  async getAllStudents(): Promise<Student[]> {
+    return this.userRepository.findStudents();
+  }
+
+  async getStudentById(id: number): Promise<Student> {
+    if (id <= 0) {
+      throw new Error('Invalid student ID');
+    }
+
+    const student = await this.userRepository.findById(id);
+
+    if (!student) {
+      throw new Error('Student not found');
+    }
+
+    if (student.role === UserRole.ETUDIANT) {
+      return student;
+    }
+
+    if (student.role === UserRole.ADMIN) {
+      throw new Error('User is an admin');
+    }
+
+    throw new Error('Invalid user role');
+  }
+
+  async createStudent(
+    data: CreateStudentDTO,
+    role: UserRole
+  ): Promise<Student> {
+
+    if (role !== UserRole.ADMIN) {
+      throw new Error('Only admin can create students');
+    }
+
+    this.validateStudentData(data);
+
+    const existingStudent =
+      await this.userRepository.findByEmail(data.email);
+
+    if (existingStudent) {
+      throw new Error('Email already exists');
+    }
+
+    return this.userRepository.createStudent(data);
+  }
+
+  async updateStudent(
+    id: number,
+    data: UpdateStudentDTO,
+    role: UserRole
+  ): Promise<Student> {
+
+    if (role !== UserRole.ADMIN) {
+      throw new Error('Only admin can update students');
+    }
+
+    if (id <= 0) {
+      throw new Error('Invalid student ID');
+    }
+
+    const student = await this.getStudentById(id);
+
+    if (data.email && data.email !== student.email) {
+      const existingStudent =
+        await this.userRepository.findByEmail(data.email);
+
+      if (existingStudent) {
+        throw new Error('Email already exists');
+      }
+    }
+
+    const updated =
+      await this.userRepository.updateStudent(id, data);
+
+    if (!updated) {
+      throw new Error('Student not found');
+    }
+
+    return updated;
+  }
+
+  async deleteStudent(
+    id: number,
+    role: UserRole
+  ): Promise<void> {
+
+    if (role !== UserRole.ADMIN) {
+      throw new Error('Only admin can deactivate students');
+    }
+
+    if (id <= 0) {
+      throw new Error('Invalid student ID');
+    }
+
+    await this.getStudentById(id);
+
+    const student =
+      await this.userRepository.deactivateStudent(id);
+
+    if (!student) {
+      throw new Error('Student not found');
+    }
+  }
+
+  private validateStudentData(data: CreateStudentDTO): void {
+
+    if (!data.firstName?.trim()) {
+      throw new Error('First name is required');
+    }
+
+    if (!data.lastName?.trim()) {
+      throw new Error('Last name is required');
+    }
+
+    if (!data.email?.trim()) {
+      throw new Error('Email is required');
+    }
+
+    if (!data.password?.trim()) {
+      throw new Error('Password is required');
+    }
+
+    if (!this.isValidEmail(data.email)) {
+      throw new Error('Invalid email format');
+    }
+  }
+
+  private isValidEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+}

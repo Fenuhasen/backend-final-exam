@@ -3,17 +3,18 @@ import {
   Student,
   CreateStudentDTO,
   UpdateStudentDTO
-} from '../model/student';
+} from '../model/user';
 
-export class StudentRepository {
+export class UserRepository {
 
-  async findAll(): Promise<Student[]> {
+  async findStudents(): Promise<Student[]> {
     const result = await pool.query(
       `SELECT
-        id_user AS id,
+        id_user,
         first_name,
         last_name,
         email,
+        password,
         role,
         status,
         created_at
@@ -28,10 +29,11 @@ export class StudentRepository {
   async findById(id: number): Promise<Student | null> {
     const result = await pool.query(
       `SELECT
-        id_user AS id,
+        id_user,
         first_name,
         last_name,
         email,
+        password,
         role,
         status,
         created_at
@@ -47,10 +49,11 @@ export class StudentRepository {
   async findByEmail(email: string): Promise<Student | null> {
     const result = await pool.query(
       `SELECT
-        id_user AS id,
+        id_user,
         first_name,
         last_name,
         email,
+        password,
         role,
         status,
         created_at
@@ -63,7 +66,7 @@ export class StudentRepository {
     return result.rows[0] || null;
   }
 
-  async create(data: CreateStudentDTO): Promise<Student> {
+  async createStudent(data: CreateStudentDTO): Promise<Student> {
     const result = await pool.query(
       `INSERT INTO users (
         first_name,
@@ -75,14 +78,7 @@ export class StudentRepository {
         created_at
       )
       VALUES ($1, $2, $3, $4, 'ETUDIANT', 'ACTIF', NOW())
-      RETURNING
-        id_user AS id,
-        first_name,
-        last_name,
-        email,
-        role,
-        status,
-        created_at`,
+      RETURNING *`,
       [
         data.firstName,
         data.lastName,
@@ -94,7 +90,7 @@ export class StudentRepository {
     return result.rows[0];
   }
 
-  async update(
+  async updateStudent(
     id: number,
     data: UpdateStudentDTO
   ): Promise<Student | null> {
@@ -134,104 +130,23 @@ export class StudentRepository {
        SET ${updates.join(', ')}
        WHERE id_user = $${paramCount}
        AND role = 'ETUDIANT'
-       RETURNING
-         id_user AS id,
-         first_name,
-         last_name,
-         email,
-         role,
-         status,
-         created_at`,
+       RETURNING *`,
       values
     );
 
     return result.rows[0] || null;
   }
 
-  async delete(id: number): Promise<Student | null> {
+  async deactivateStudent(id: number): Promise<Student | null> {
     const result = await pool.query(
       `UPDATE users
        SET status = 'DESACTIVE'
        WHERE id_user = $1
        AND role = 'ETUDIANT'
-       RETURNING
-         id_user AS id,
-         first_name,
-         last_name,
-         email,
-         role,
-         status,
-         created_at`,
+       RETURNING *`,
       [id]
     );
 
     return result.rows[0] || null;
-  }
-
-  async findMyExams(studentId: number) {
-    const result = await pool.query(
-      `SELECT
-        e.id_exam AS id,
-        e.title AS titre,
-        e.id_course AS id_cours,
-        e.start_date AS "dateDebut",
-        e.end_date AS "dateFin"
-       FROM exams e
-       WHERE e.end_date >= NOW()
-       ORDER BY e.start_date ASC`
-    );
-
-    return result.rows;
-  }
-
-  async findMyExamById(
-    studentId: number,
-    examId: number
-  ) {
-    const result = await pool.query(
-      `SELECT
-        e.id_exam AS id,
-        e.title AS titre,
-        e.id_course AS id_cours,
-        e.start_date AS "dateDebut",
-        e.end_date AS "dateFin"
-       FROM exams e
-       WHERE e.id_exam = $1`,
-      [examId]
-    );
-
-    return result.rows[0] || null;
-  }
-  async findMyResults(studentId: number) {
-    const result = await pool.query(
-      `SELECT
-        s.id_submission AS id,
-        s.id_exam AS id_examen,
-        s.submitted_at AS "submittedAt"
-       FROM submissions s
-       WHERE s.id_student = $1
-       ORDER BY s.submitted_at DESC`,
-      [studentId]
-    );
-
-    return result.rows;
-  }
-  async findExamResults(examId: number) {
-    const result = await pool.query(
-      `SELECT
-        s.id_submission AS id,
-        s.id_student AS id_etudiant,
-        u.first_name,
-        u.last_name,
-        s.submitted_at AS "submittedAt"
-       FROM submissions s
-       JOIN users u
-         ON u.id_user = s.id_student
-       WHERE s.id_exam = $1
-       ORDER BY s.submitted_at DESC`,
-      [examId]
-    );
-
-    return result.rows;
   }
 }
