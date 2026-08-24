@@ -43,6 +43,25 @@ const SubmissionService = {
             })
         );
         return submissions;
+    },
+    async findByStudentId(idStudent: number) {
+        const sub = await SubmissionRepository.findByStudentID(idStudent);
+        const submissions = await Promise.all(
+            sub.rows.map(async (s) => {
+                const items =
+                    await SubmissionItemRepository.findBySubmissionId(
+                        s.id_submission
+                    );
+                return {
+                    id_submission: s.id_submission,
+                    id_exam: s.id_exam,
+                    id_student: s.id_student,
+                    submitted_at: s.submitted_at,
+                    items: items.rows
+                };
+            })
+        );
+        return submissions;
     }
 };
 
