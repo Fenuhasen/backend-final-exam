@@ -1,4 +1,4 @@
-import { pool } from '../config/database';
+import pool from '../config/db';
 import { Course, CreateCourseInput, UpdateCourseInput } from '../model/course';
 
 export const CourseRepository = {
