@@ -26,6 +26,19 @@ const SubmissionController = {
                 error: error
             });
         }
+    },
+    async findByExamId(req: Request, res: Response){
+        try {
+            const { id } = req.params
+            const sub = (await SubmissionService.findByExamId( Number(id) ));
+            res.status(200).json(sub);
+        } catch (error) {
+            console.log(error);
+            res.status(500).json({
+                message: "Erreur lors de la création de la submission",
+                error: error
+            });
+        }
     }
 };  
 
