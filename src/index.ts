@@ -2,7 +2,10 @@ import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import pool from './config/db';
+
 import submissionRouter from './router/submissionRouter';
+import courseController from './controller/courseController';
+import examRouter from './router/examRoutes'
 
 dotenv.config();
 
@@ -12,6 +15,8 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use('/submissions', submissionRouter);
+app.use('/examens', examRouter);
+app.use('/api/courses', courseController);
 
 app.get('/', async (req: Request, res: Response) => {
   try {
