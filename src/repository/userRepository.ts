@@ -13,7 +13,7 @@ export class UserRepository {
         id_user,
         first_name,
         last_name,
-        email,
+        mail,
         role,
         status,
         created_at
@@ -31,7 +31,7 @@ export class UserRepository {
         id_user,
         first_name,
         last_name,
-        email,
+        mail,
         role,
         status,
         created_at
@@ -50,7 +50,7 @@ export class UserRepository {
         id_user,
         first_name,
         last_name,
-        email,
+        mail,
         role,
         status,
         created_at
@@ -68,7 +68,7 @@ export class UserRepository {
       `INSERT INTO users (
         first_name,
         last_name,
-        email,
+        mail,
         password,
         role,
         status,

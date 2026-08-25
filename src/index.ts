@@ -14,10 +14,10 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use('/submissions', submissionRouter);
-app.use('/examens', examRouter);
+app.use('/api/submissions', submissionRouter);
+app.use('/api/exams', examRouter);
 app.use('/api/courses', courseController);
-app.use ('/students', userRouter)
+app.use ('/api/students', userRouter)
 
 app.get('/', async (req: Request, res: Response) => {
   try {
