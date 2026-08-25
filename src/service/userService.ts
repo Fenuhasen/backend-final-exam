@@ -5,6 +5,7 @@ import {
   UpdateStudentDTO,
   UserRole
 } from '../model/user';
+import { StudentDTO } from '../dto/userDto';
 
 export class UserService {
 
@@ -14,11 +15,23 @@ export class UserService {
     this.userRepository = new UserRepository();
   }
 
-  async getAllStudents(): Promise<Student[]> {
-    return this.userRepository.findStudents();
+  async getAllStudents(): Promise<StudentDTO[]> {
+    const result: StudentDTO[] = [];
+    (await this.userRepository.findStudents()).forEach(student => {
+      result.push(
+        {
+          id: student.id_user,
+          name: `${student.first_name}  ${student.name}`,
+          email: student.email,
+          is_active: student.status == "ACTIF",
+          created_at: student.created_at
+        }
+      )
+    });
+    return result;
   }
 
-  async getStudentById(id: number): Promise<Student> {
+  async getStudentById(id: number): Promise<StudentDTO> {
     if (id <= 0) {
       throw new Error('Invalid student ID');
     }
@@ -30,7 +43,13 @@ export class UserService {
     }
 
     if (student.role === UserRole.ETUDIANT) {
-      return student;
+      return {
+        id: student.id_user,
+        name: `${student.first_name}  ${student.name}`,
+        email: student.email,
+        is_active: student.status == "ACTIF",
+        created_at: student.created_at
+      };
     }
 
     if (student.role === UserRole.ADMIN) {

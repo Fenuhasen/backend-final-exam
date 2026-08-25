@@ -12,8 +12,8 @@ export class UserRepository {
       `SELECT
         id_user,
         first_name,
-        last_name,
-        mail,
+        last_name as name,
+        mail as email,
         role,
         status,
         created_at
@@ -30,8 +30,8 @@ export class UserRepository {
       `SELECT
         id_user,
         first_name,
-        last_name,
-        mail,
+        last_name as name,
+        mail as email,
         role,
         status,
         created_at
@@ -49,8 +49,8 @@ export class UserRepository {
       `SELECT
         id_user,
         first_name,
-        last_name,
-        mail,
+        last_name as name,
+        mail as email,
         role,
         status,
         created_at
