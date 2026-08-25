@@ -7,6 +7,10 @@ router.get('/', async (req: Request, res: Response) => {
   const courses = await CourseService.list();
   res.json(courses);
 });
+router.get('/:id', async (req: Request, res: Response) => {
+  const courses = await CourseService.getById(Number(req.params.id));
+  res.json(courses);
+});
 
 router.post('/', async (req: Request, res: Response) => {
   const course = await CourseService.create(req.body);
