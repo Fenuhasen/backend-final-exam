@@ -78,7 +78,7 @@ export class UserRepository {
       RETURNING *`,
       [
         data.firstName,
-        data.lastName,
+        data.name,
         data.email,
         data.password
       ]
@@ -101,9 +101,9 @@ export class UserRepository {
       values.push(data.firstName);
     }
 
-    if (data.lastName !== undefined) {
+    if (data.name !== undefined) {
       updates.push(`last_name = $${paramCount++}`);
-      values.push(data.lastName);
+      values.push(data.name);
     }
 
     if (data.email !== undefined) {

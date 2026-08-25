@@ -125,7 +125,7 @@ export class UserService {
       throw new Error('First name is required');
     }
 
-    if (!data.lastName?.trim()) {
+    if (!data.name?.trim()) {
       throw new Error('Last name is required');
     }
 

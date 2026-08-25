@@ -11,7 +11,7 @@ export enum UserStatus {
 export interface User {
   id_user: number;
   first_name: string;
-  last_name: string;
+  name: string;
   email: string;
   password: string;
   role: UserRole;
@@ -27,30 +27,37 @@ export interface Admin extends User {
   role: UserRole.ADMIN;
 }
 
-export interface CreateStudentDTO {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-}
-
 export interface UpdateStudentDTO {
   firstName?: string;
-  lastName?: string;
+  name?: string;
   email?: string;
   password?: string;
 }
 
 export interface CreateAdminDTO {
   firstName: string;
-  lastName: string;
+  name: string;
   email: string;
   password: string;
 }
 
 export interface UpdateAdminDTO {
   firstName?: string;
-  lastName?: string;
+  name?: string;
+  email?: string;
+  password?: string;
+}
+
+export interface CreateStudentDTO {
+  firstName?: string; 
+  name: string;        
+  email: string;
+  password: string;
+}
+
+export interface UpdateStudentDTO {
+  firstName?: string;
+  name?: string;
   email?: string;
   password?: string;
 }
