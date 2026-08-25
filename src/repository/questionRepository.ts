@@ -1,11 +1,6 @@
-import { PoolClient } from "pg";
-import pool from "../config/db"
-import {
-    Question,
-    Choice,
-    QuestionWithChoice
-} from "../model/exam";
-import { CreateQuestionInput} from "../dto/examDto";
+import pool from "../config/db";
+import { Question, Choice, QuestionWithChoice } from "../model/exam";
+import { CreateQuestionInput } from "../dto/examDto";
 
 function mapQuestion(row: any): Question {
     return {
@@ -26,7 +21,7 @@ function mapChoice(row: any): Choice {
     };
 }
 
-export const questionRepositorie = {
+export const questionRepository = {
     async findByExamWithChoices(examId: number): Promise<QuestionWithChoice[]> {
         const questionsResult = await pool.query(
             `SELECT * FROM questions WHERE id_exam = $1 ORDER BY position ASC`,
@@ -57,78 +52,26 @@ export const questionRepositorie = {
         data: CreateQuestionInput,
         position: number
     ): Promise<QuestionWithChoice> {
-        const client: PoolClient = await pool.connect();
-        try {
-            await client.query("BEGIN");
+        const questionResult = await pool.query(
+            `INSERT INTO questions (id_exam, statement, points, position)
+             VALUES ($1, $2, $3, $4)
+             RETURNING *`,
+            [examId, data.statement, data.points, position]
+        );
+        const question = mapQuestion(questionResult.rows[0]);
 
-            const questionResult = await client.query(
-                `INSERT INTO questions (id_exam, statement, points, position)
-                 VALUES ($1, $2, $3, $4)
+        const choice: Choice[] = [];
+        for (const c of data.choices) {
+            const choiceResult = await pool.query(
+                `INSERT INTO choices (id_question, text, is_correct)
+                 VALUES ($1, $2, $3)
                  RETURNING *`,
-                [examId, data.statement, data.points, position]
+                [question.questionId, c.text, c.isCorrect]
             );
-            const question = mapQuestion(questionResult.rows[0]);
-
-            const choice: Choice[] = [];
-            for (const c of data.choices) {
-                const choiceResult = await client.query(
-                    `INSERT INTO choices (id_question, text, is_correct)
-                     VALUES ($1, $2, $3)
-                     RETURNING *`,
-                    [question.questionId, c.text, c.isCorrect]
-                );
-                choice.push(mapChoice(choiceResult.rows[0]));
-            }
-
-            await client.query("COMMIT");
-            return { ...question, choice };
-        } catch (err) {
-            await client.query("ROLLBACK");
-            throw err;
-        } finally {
-            client.release();
+            choice.push(mapChoice(choiceResult.rows[0]));
         }
-    },
 
-    async updateWithChoices(
-        questionId: number,
-        data: CreateQuestionInput
-    ): Promise<QuestionWithChoice | null> {
-        const client: PoolClient = await pool.connect();
-        try {
-            await client.query("BEGIN");
-
-            const questionResult = await client.query(
-                `UPDATE questions SET statement = $2, points = $3 WHERE id_question = $1 RETURNING *`,
-                [questionId, data.statement, data.points]
-            );
-            if (questionResult.rows.length === 0) {
-                await client.query("ROLLBACK");
-                return null;
-            }
-            const question = mapQuestion(questionResult.rows[0]);
-
-            await client.query(`DELETE FROM choices WHERE id_question = $1`, [questionId]);
-
-            const choice: Choice[] = [];
-            for (const c of data.choices) {
-                const choiceResult = await client.query(
-                    `INSERT INTO choices (id_question, text, is_correct)
-                     VALUES ($1, $2, $3)
-                     RETURNING *`,
-                    [questionId, c.text, c.isCorrect]
-                );
-                choice.push(mapChoice(choiceResult.rows[0]));
-            }
-
-            await client.query("COMMIT");
-            return { ...question, choice };
-        } catch (err) {
-            await client.query("ROLLBACK");
-            throw err;
-        } finally {
-            client.release();
-        }
+        return { ...question, choice };
     },
 
     async delete(questionId: number): Promise<void> {

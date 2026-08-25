@@ -14,7 +14,7 @@ function mapExam(row: any): Exam {
     };
 }
 
-export const examRepositorie = {
+export const examRepository = {
     async findAll(): Promise<Exam[]> {
         const result = await pool.query(`SELECT * FROM exams ORDER BY start_date DESC`);
         return result.rows.map(mapExam);
