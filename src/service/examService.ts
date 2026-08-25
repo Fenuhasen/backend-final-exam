@@ -1,7 +1,8 @@
 import { examRepository } from "../repository/examRepository";
 import { questionRepository } from "../repository/questionRepository";
 import { Exam, ExamWindowStatus } from "../model/exam";
-import { CreateExamInput, UpdateExamInput } from "../dto/examDto";
+import { CreateExamInput, ExamDto, UpdateExamInput } from "../dto/examDto";
+import pool from "../config/db";
 
 function computeWindowStatus(exam: Exam): ExamWindowStatus {
     const now = new Date();
@@ -12,10 +13,51 @@ function computeWindowStatus(exam: Exam): ExamWindowStatus {
 
 export const examService = {
 
-    async listAll(): Promise<Exam[]> {
-        return examRepository.findAll();
-    },
+    async listAll(): Promise<ExamDto[]> {
+        const exams = await examRepository.findAll();
 
+        const result: ExamDto[] = [];
+
+        for (const exam of exams) {
+            const questionCount = await pool
+                .query(
+                    "SELECT COUNT(*) FROM questions WHERE id_exam = $1",
+                    [exam.examId]
+                )
+                .then((r) => Number(r.rows[0].count));
+
+            const attemptCount = await pool
+                .query(
+                    "SELECT COUNT(*) FROM submissions WHERE id_exam = $1",
+                    [exam.examId]
+                )
+                .then((r) => Number(r.rows[0].count));
+
+            const course = await pool.query(
+                "SELECT id_course, code, name FROM courses WHERE id_course = $1",
+                [exam.courseId]
+            );
+
+            result.push({
+                id: exam.examId,
+                title: exam.title,
+                description: exam.description,
+                starts_at: exam.startDate,
+                ends_at: exam.endDate,
+
+                course: {
+                    id: course.rows[0].id_course,
+                    code: course.rows[0].code,
+                    name: course.rows[0].name
+                },
+
+                question_count: questionCount,
+                attempt_count: attemptCount
+            });
+        }
+
+        return result;
+    },
     async getByIdForAdmin(examId: number) {
         const exam = await examRepository.findById(examId);
         const questions = await questionRepository.findByExamWithChoices(examId);

@@ -27,3 +27,18 @@ export interface SubmitAnswerInput {
 export interface SubmitExamInput {
     answers: SubmitAnswerInput[];
 }
+
+export interface ExamDto {
+    id: number,
+    title: string,
+    description: string,
+    starts_at: Date,
+    ends_at: Date,
+    course: {
+        id: number,
+        code: string,
+        name: string
+    },
+    question_count: number,
+    attempt_count: number
+}
