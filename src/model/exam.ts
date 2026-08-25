@@ -24,7 +24,7 @@ export interface Choice {
 }
 
 export interface QuestionWithChoice extends Question {
-    choices: Choice[];
+    choice: Choice[];
 }
 
 export interface Submission {
@@ -44,42 +44,6 @@ export interface SubmissionItem {
 
 export interface SubmissionWithItems extends Submission {
     items: SubmissionItem[];
-}
-
-export interface CreateExamInput {
-    courseId: number;
-    title: string;
-    description: string;
-    startDate: Date;
-    endDate: Date;
-}
-
-export interface UpdateExamInput {
-    courseId?: number;
-    title?: string;
-    description?: string;
-    startDate?: Date;
-    endDate?: Date;
-}
-
-export interface CreateChoiceInput {
-    text: string;
-    isCorrect: boolean;
-}
-
-export interface CreateQuestionInput {
-    statement: string;
-    points: number;
-    choices: CreateChoiceInput[];
-}
-
-export interface SubmitAnswerInput {
-    questionId: number;
-    choiceId: number | null;
-}
-
-export interface SubmitExamInput {
-    answers: SubmitAnswerInput[];
 }
 
 export type ExamWindowStatus = "upcoming" | "open" | "closed" | "done";
