@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import pool from './config/db';
-
+import userRouter from './router/userRouter'
 import submissionRouter from './router/submissionRouter';
 import courseController from './controller/courseController';
 import examRouter from './router/examRoutes'
@@ -17,6 +17,7 @@ app.use(express.json());
 app.use('/submissions', submissionRouter);
 app.use('/examens', examRouter);
 app.use('/api/courses', courseController);
+app.use ('/students', userRouter)
 
 app.get('/', async (req: Request, res: Response) => {
   try {
