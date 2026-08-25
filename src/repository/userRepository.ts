@@ -14,7 +14,6 @@ export class UserRepository {
         first_name,
         last_name,
         email,
-        password,
         role,
         status,
         created_at
@@ -33,7 +32,6 @@ export class UserRepository {
         first_name,
         last_name,
         email,
-        password,
         role,
         status,
         created_at
@@ -53,7 +51,6 @@ export class UserRepository {
         first_name,
         last_name,
         email,
-        password,
         role,
         status,
         created_at
