@@ -3,6 +3,7 @@ import { questionRepository } from "../repository/questionRepository";
 import { Exam, ExamWindowStatus } from "../model/exam";
 import { CreateExamInput, ExamDto, UpdateExamInput } from "../dto/examDto";
 import pool from "../config/db";
+import { Result } from "pg";
 
 function computeWindowStatus(exam: Exam): ExamWindowStatus {
     const now = new Date();
@@ -99,4 +100,7 @@ export const examService = {
             })),
         };
     },
+    async getAllResults(id: number): Promise<any>{
+        return examRepository.findAll;
+    }
 };

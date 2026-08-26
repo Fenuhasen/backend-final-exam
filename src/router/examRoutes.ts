@@ -10,7 +10,9 @@ const router = Router();
 router.get("/", examController.list);
 router.post("/", examController.create);
 router.get("/:id", examController.getById);
+router.get("/:id/results", examController.getAllResults);
 router.put("/:id", examController.update);
+router.delete("/:id", examController.remove);
 router.delete("/:id", examController.remove);
 router.get("/:id/submissions", SubmissionController.findByExamId);
 

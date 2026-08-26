@@ -1,7 +1,10 @@
-import { SubmissionItemDto } from "./submissionItemDto";
-
 export interface SubmissionDTO {
     id_exam: number;
     id_student: number;
-    items: SubmissionItemDto[];
+    answers: SubmissionItemDto[];
+}
+
+export interface SubmissionItemDto {
+    question_id: number;
+    choice_id: number;
 }

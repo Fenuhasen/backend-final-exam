@@ -36,4 +36,7 @@ export const examController = {
         await questionService.delete(Number(req.params.id));
         res.status(204).end();
     },
+    async getAllResults(req: Request, res: Response) {
+        res.json(await examService.getAllResults(Number(req.params.id)))
+    }
 };

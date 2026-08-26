@@ -61,4 +61,7 @@ export const examRepository = {
         );
         return result.rows.length;
     },
+    async getQuestionById(id: number) {
+        return pool.query('SELECT * FROM Questions WHERE id_question = $1', [id]);
+    }
 };

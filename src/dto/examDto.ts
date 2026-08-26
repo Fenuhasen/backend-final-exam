@@ -42,3 +42,18 @@ export interface ExamDto {
     question_count: number,
     attempt_count: number
 }
+
+export interface Question {
+    id: number,
+    exam_id: number,
+    statement: string,
+    points: number,
+    position: number,
+    choices: Choice[]
+}
+
+export interface Choice {
+    id: number,
+    text: string,
+    is_correct: boolean
+}
