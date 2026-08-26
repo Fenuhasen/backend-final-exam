@@ -6,6 +6,7 @@ import userRouter from './router/userRouter'
 import submissionRouter from './router/submissionRouter';
 import courseController from './controller/courseController';
 import examRouter from './router/examRoutes'
+import myRouter from './router/myRouter'
 
 dotenv.config();
 
@@ -16,7 +17,7 @@ app.use(cors());
 app.use(express.json());
 app.use('/api/submissions', submissionRouter);
 app.use('/api/exams', examRouter);
-app.use('/api/my', examRouter);
+app.use('/api/my', myRouter);
 app.use('/api/courses', courseController);
 app.use ('/api/students', userRouter)
 

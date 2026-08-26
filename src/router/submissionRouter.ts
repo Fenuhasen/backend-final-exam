@@ -3,7 +3,6 @@ import SubmissionController from "../controller/submissionController";
 
 const router = Router();
 
-router.post("/", SubmissionController.createSubmission);
 router.get("/", SubmissionController.findAll)
 router.get("/:id", SubmissionController.findById)
 router.get("/examens/:id/", SubmissionController.findByExamId)

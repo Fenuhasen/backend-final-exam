@@ -6,7 +6,9 @@ import { Correction } from "../dto/CorrectionDto";
 const SubmissionController = {
     async createSubmission(req: Request, res: Response) {
         try {
+            const {id} = req.params;
             const submission: SubmissionDTO = req.body;
+            submission.id_exam = Number(id);
             const sub = await SubmissionService.createSubmission(submission);
             res.status(201).json({ message: "Submission créée avec succès", submission: sub.rows[0] });
         } catch (error) {
