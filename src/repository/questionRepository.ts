@@ -42,6 +42,14 @@ export const questionRepository = {
         }));
     },
 
+    async findByExam(examId: number): Promise<Question[]> {
+        const result = await pool.query(
+            `SELECT * FROM questions WHERE id_exam = $1 ORDER BY position ASC`,
+            [examId]
+        );
+        return result.rows.map(mapQuestion);
+    },
+
     async findById(questionId: number): Promise<Question | null> {
         const result = await pool.query(`SELECT * FROM questions WHERE id_question = $1`, [questionId]);
         return result.rows[0] ? mapQuestion(result.rows[0]) : null;

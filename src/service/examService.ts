@@ -2,8 +2,9 @@ import { examRepository } from "../repository/examRepository";
 import { questionRepository } from "../repository/questionRepository";
 import { Exam, ExamWindowStatus } from "../model/exam";
 import { CreateExamInput, ExamDto, UpdateExamInput } from "../dto/examDto";
+import { Result, Result_item } from "../dto/resultsDto";
 import pool from "../config/db";
-import { Result } from "pg";
+import { SubmissionRepository } from "../repository/submissionRepository";
 
 function computeWindowStatus(exam: Exam): ExamWindowStatus {
     const now = new Date();
@@ -100,7 +101,42 @@ export const examService = {
             })),
         };
     },
-    async getAllResults(id: number): Promise<any>{
-        return examRepository.findAll;
+    async getAllResults(id: number): Promise<Result>{
+        return this.getExamStatistics(id);
+    },
+    async getExamStatistics(id_exam: number): Promise<Result> {
+    const exam = await examRepository.findById(id_exam);
+
+    if (!exam) {
+        throw new Error(`Exam ${id_exam} not found`);
     }
+
+    const questions = await questionRepository.findByExam(id_exam);
+    const total_points = questions.reduce((sum, q) => sum + q.points, 0);
+
+    const submissions = await SubmissionRepository.findByExamWithStudents(id_exam);
+
+    const attempt_count = submissions.rows.length;
+    const average = attempt_count > 0
+        ? submissions.rows.reduce((sum, submission) => sum + Number(submission.score ?? 0), 0) / attempt_count
+        : 0;
+
+    const results: Result_item[] = submissions.rows.map((submission) => ({
+        student_id: submission.id_student,
+        name: `${submission.first_name ?? ""} ${submission.last_name ?? ""}`.trim(),
+        score: Number(submission.score ?? 0),
+        submitted_at: submission.submitted_at
+    }));
+
+    return {
+        exam: {
+            id: exam.examId,
+            title: exam.title
+        },
+        total_points,
+        average,
+        attempt_count,
+        results
+    };
+}
 };

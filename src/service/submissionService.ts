@@ -130,7 +130,8 @@ const SubmissionService = {
             id_student: submission.id_student,
             answers: await this.createCorrectionItems(submission)
         };
-    }
+    },
+    
 };
 
 export { SubmissionService };
