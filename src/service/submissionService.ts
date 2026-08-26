@@ -45,7 +45,10 @@ const SubmissionService = {
         return {
             id_exam: s.id_exam,
             id_student: s.id_student,
-            answers: items.rows
+            answers: items.rows.map((item) => ({
+                question_id: item.id_question,
+                choice_id: item.id_choice
+            }))
         };
     },
     async findByExamId(idExam: number) {
@@ -95,7 +98,7 @@ const SubmissionService = {
         for (const question of questions) {
 
             const studentAnswer = answerList.find(
-                answer => answer.question_id === question.questionId
+                answer => Number(answer.question_id) === question.questionId
             );
 
             const correctAnswer = question.choice.find(
