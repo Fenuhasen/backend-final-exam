@@ -19,6 +19,15 @@ export const CourseRepository = {
     return result.rows[0] || null;
   },
 
+  async findByCode(code: string): Promise<Course | null> {
+    const result = await pool.query(
+      'SELECT id_course, code, name, description FROM courses WHERE code = $1',
+      [code]
+    );
+
+    return result.rows[0] || null;
+  },
+
   async create(data: CreateCourseInput): Promise<Course> {
     const result = await pool.query(
       `INSERT INTO courses (code, name, description)

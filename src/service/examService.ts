@@ -62,15 +62,28 @@ export const examService = {
     },
     async getByIdForAdmin(id: number) {
         const exam = await examRepository.findById(id);
+        if (!exam) {
+            throw new Error("Exam not found");
+        }
         const questions = await questionRepository.findByExamWithChoices(id);
         return { ...exam, questions };
     },
 
     async create(input: CreateExamInput): Promise<ExamDto> {
+        await this.validateExamInput(input);
         return examRepository.create(input);
     },
 
     async update(id: number, input: UpdateExamInput): Promise<ExamDto | null> {
+        const existingExam = await examRepository.findById(id);
+        if (!existingExam) {
+            throw new Error("Exam not found");
+        }
+        await this.validateExamInput({
+            ...input,
+            starts_at: input.starts_at ?? existingExam.starts_at.toISOString(),
+            ends_at: input.ends_at ?? existingExam.ends_at.toISOString()
+        });
         return examRepository.update(id, input);
     },
 
@@ -125,6 +138,23 @@ export const examService = {
     },
     async getAllResults(id: number): Promise<Result>{
         return this.getExamStatistics(id);
+    },
+
+    async validateExamInput(input: Partial<CreateExamInput>): Promise<void> {
+        if (input.course_id !== undefined && !(await pool.query(
+            "SELECT id_course FROM courses WHERE id_course = $1",
+            [input.course_id]
+        )).rows[0]) {
+            throw new Error("Course not found");
+        }
+
+        if (input.starts_at !== undefined && input.ends_at !== undefined) {
+            const startsAt = new Date(input.starts_at);
+            const endsAt = new Date(input.ends_at);
+            if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime()) || startsAt >= endsAt) {
+            throw new Error("End date must be after start date");
+            }
+        }
     },
 
     async getStudentResults(studentId: number) {

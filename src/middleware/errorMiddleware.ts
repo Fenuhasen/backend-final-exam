@@ -11,8 +11,10 @@ export function errorHandler(
     const message = error instanceof Error ? error.message : "Internal server error";
     let status = 500;
 
-    if (message === "Invalid answers" || message === "Answers must be an array") {
+    if (["Invalid answers", "Answers must be an array", "Invalid choices", "Invalid correct choice", "End date must be after start date"].includes(message)) {
         status = 400;
+    } else if (message === "Course already exists") {
+        status = 409;
     } else if (message === "Exam already taken") {
         status = 409;
     } else if (message.endsWith("not found")) {

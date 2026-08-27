@@ -61,10 +61,26 @@ export const CourseService = {
   },
 
   async create(data: CreateCourseInput) {
+    const existingCourse = await CourseRepository.findByCode(data.code);
+    if (existingCourse) {
+      throw new Error('Course already exists');
+    }
+
     return CourseRepository.create(data);
   },
 
   async update(id: number, data: UpdateCourseInput) {
+    if (!(await CourseRepository.findById(id))) {
+      throw new Error('Course not found');
+    }
+
+    if (data.code !== undefined) {
+      const existingCourse = await CourseRepository.findByCode(data.code);
+      if (existingCourse && existingCourse.id_course !== id) {
+        throw new Error('Course already exists');
+      }
+    }
+
     return CourseRepository.update(id, data);
   },
 
