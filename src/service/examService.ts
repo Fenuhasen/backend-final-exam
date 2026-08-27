@@ -106,14 +106,20 @@ export const examService = {
         return {
             id: exam?.id,
             title: exam?.title,
+            course: {
+                code: exam?.course.code,
+                name: exam?.course.name
+            },
             description: exam?.description,
-            starts_at: exam?.starts_at,
             ends_at: exam?.ends_at,
+            question_count: exam?.question_count,
+            total_points: questions.reduce((total, q) => total + q.points, 0),
             questions: questions.map((q) => ({
-                questionId: q.id,
+                id: q.id,
                 statement: q.statement,
                 points: q.points,
-                choice: q.choices.map((c) => ({ choiceId: c.id, text: c.text })),
+                position: q.position,
+                choices: q.choices.map((c) => ({ id: c.id, text: c.text })),
             })),
         };
     },
