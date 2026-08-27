@@ -61,6 +61,26 @@ export const examRepository = {
         );
         return result.rows.length;
     },
+    async findStudentResults(studentId: number) {
+        return pool.query(
+            `SELECT s.id_exam,
+                    e.title,
+                    c.code AS course_code,
+                    COALESCE(SUM(CASE WHEN ch.is_correct THEN q.points ELSE 0 END), 0) AS score,
+                    COALESCE((SELECT SUM(points) FROM questions WHERE id_exam = e.id_exam), 0) AS total_points,
+                    s.submitted_at
+             FROM submissions s
+             JOIN exams e ON e.id_exam = s.id_exam
+             JOIN courses c ON c.id_course = e.id_course
+             LEFT JOIN submission_items si ON si.id_submission = s.id_submission
+             LEFT JOIN choices ch ON ch.id_choice = si.id_choice
+             LEFT JOIN questions q ON q.id_question = si.id_question
+             WHERE s.id_student = $1
+             GROUP BY s.id_submission, s.id_exam, e.title, c.code, e.id_exam, s.submitted_at
+             ORDER BY s.submitted_at DESC`,
+            [studentId]
+        );
+    },
     async getQuestionById(id: number) {
         return pool.query('SELECT * FROM Questions WHERE id_question = $1', [id]);
     }

@@ -78,9 +78,25 @@ export const examService = {
         await examRepository.delete(examId);
     },
 
-    async listWithWindowStatus(): Promise<Array<Exam & { status: ExamWindowStatus }>> {
+    async listWithWindowStatus(studentId?: number) {
         const exams = await examRepository.findAll();
-        return exams.map((exam) => ({ ...exam, status: computeWindowStatus(exam) }));
+        const available = [];
+        for (const exam of exams) {
+            if (computeWindowStatus(exam) !== "open") continue;
+            if (studentId !== undefined && (await SubmissionRepository.findByStudentAndExam(studentId, exam.examId)).rows.length > 0) continue;
+            const questions = await questionRepository.findByExam(exam.examId);
+            const course = await pool.query("SELECT code, name FROM courses WHERE id_course = $1", [exam.courseId]);
+            available.push({
+                id: exam.examId,
+                title: exam.title,
+                course: { code: course.rows[0].code, name: course.rows[0].name },
+                description: exam.description,
+                ends_at: exam.endDate,
+                question_count: questions.length,
+                total_points: questions.reduce((sum, question) => sum + question.points, 0)
+            });
+        }
+        return available;
     },
 
     async getForStudentToTake(examId: number) {
@@ -103,6 +119,18 @@ export const examService = {
     },
     async getAllResults(id: number): Promise<Result>{
         return this.getExamStatistics(id);
+    },
+
+    async getStudentResults(studentId: number) {
+        const result = await examRepository.findStudentResults(studentId);
+        return result.rows.map((row) => ({
+            exam_id: row.id_exam,
+            title: row.title,
+            course_code: row.course_code,
+            score: Number(row.score ?? 0),
+            total_points: Number(row.total_points ?? 0),
+            submitted_at: row.submitted_at
+        }));
     },
     async getExamStatistics(id_exam: number): Promise<Result> {
     const exam = await examRepository.findById(id_exam);

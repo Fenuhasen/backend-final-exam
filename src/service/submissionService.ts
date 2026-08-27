@@ -10,6 +10,34 @@ const SubmissionService = {
     createSubmission(submission: SubmissionDTO) {
         return SubmissionRepository.createSubmission(submission);
     },
+    async submitExam(examId: number, studentId: number, answers: SubmissionDTO["answers"]) {
+        if (!Array.isArray(answers)) throw new Error("Answers must be an array");
+        if ((await SubmissionRepository.findByStudentAndExam(studentId, examId)).rows.length > 0) {
+            throw new Error("Exam already taken");
+        }
+
+        const questions = await questionRepository.findByExamWithChoices(examId);
+        const questionIds = new Set(questions.map((question) => question.questionId));
+        const seenQuestions = new Set<number>();
+        for (const answer of answers) {
+            if (!questionIds.has(answer.question_id) || seenQuestions.has(answer.question_id)) {
+                throw new Error("Invalid answers");
+            }
+            const question = questions.find((item) => item.questionId === answer.question_id)!;
+            if (!question.choice.some((choice) => choice.choiceId === answer.choice_id)) {
+                throw new Error("Invalid answers");
+            }
+            seenQuestions.add(answer.question_id);
+        }
+
+        await this.createSubmission({ id_exam: examId, id_student: studentId, answers });
+        const correction = await this.createCorrectionItems({ id_exam: examId, id_student: studentId, answers });
+        return {
+            score: correction.reduce((sum, item) => sum + (item.is_correct ? item.points : 0), 0),
+            total_points: questions.reduce((sum, question) => sum + question.points, 0),
+            correction
+        };
+    },
     async findAll() {
         const sub = await SubmissionRepository.findAll();
         const submissions = await Promise.all(

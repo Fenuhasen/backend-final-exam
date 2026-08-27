@@ -9,10 +9,9 @@ import { StudentDTO } from '../dto/userDto';
 
 export class UserService {
 
-  private userRepository: UserRepository;
+  private userRepository = UserRepository;
 
   constructor() {
-    this.userRepository = new UserRepository();
   }
 
   async getAllStudents(): Promise<StudentDTO[]> {

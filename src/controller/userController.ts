@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { UserService } from '../service/userService';
 import { UserRole } from '../model/user';
+import { AuthenticatedRequest } from '../middleware/authMiddleware';
 
 export class UserController {
 
@@ -77,7 +78,8 @@ export class UserController {
 
     try {
 
-      const { role, ...studentData } = req.body;
+      const { role: _ignoredRole, ...studentData } = req.body;
+      const role = (req as AuthenticatedRequest).user?.role as UserRole;
 
       const student =
         await this.userService.createStudent(
@@ -133,7 +135,8 @@ export class UserController {
         return;
       }
 
-      const { role, ...studentData } = req.body;
+      const { role: _ignoredRole, ...studentData } = req.body;
+      const role = (req as AuthenticatedRequest).user?.role as UserRole;
 
       const student =
         await this.userService.updateStudent(
@@ -200,7 +203,7 @@ export class UserController {
         return;
       }
 
-      const { role } = req.body;
+      const role = (req as AuthenticatedRequest).user?.role as UserRole;
 
       await this.userService.deleteStudent(id, role);
 

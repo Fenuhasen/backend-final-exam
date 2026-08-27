@@ -1,7 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { CourseService } from '../service/courseService';
+import { authenticate, requireRole } from '../middleware/authMiddleware';
 
 const router = Router();
+
+router.use(authenticate, requireRole('ADMIN', 'admin'));
 
 router.get('/', async (req: Request, res: Response) => {
   const courses = await CourseService.list();

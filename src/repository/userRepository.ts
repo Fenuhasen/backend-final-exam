@@ -5,7 +5,18 @@ import {
   UpdateStudentDTO
 } from '../model/user';
 
-export class UserRepository {
+export const UserRepository = {
+
+  async findUserForLogin(email: string): Promise<(Student & { role: string }) | null> {
+    const result = await pool.query(
+      `SELECT id_user, first_name, last_name as name, mail as email,
+              password, role, status, created_at
+       FROM users
+       WHERE mail = $1`,
+      [email]
+    );
+    return result.rows[0] || null;
+  },
 
   async findStudents(): Promise<Student[]> {
     const result = await pool.query(
@@ -23,7 +34,7 @@ export class UserRepository {
     );
 
     return result.rows;
-  }
+  },
 
   async findById(id: number): Promise<Student | null> {
     const result = await pool.query(
@@ -42,7 +53,7 @@ export class UserRepository {
     );
 
     return result.rows[0] || null;
-  }
+  },
 
   async findByEmail(email: string): Promise<Student | null> {
     const result = await pool.query(
@@ -55,13 +66,13 @@ export class UserRepository {
         status,
         created_at
        FROM users
-       WHERE email = $1
+      WHERE mail = $1
        AND role = 'ETUDIANT'`,
       [email]
     );
 
     return result.rows[0] || null;
-  }
+  },
 
   async createStudent(data: CreateStudentDTO): Promise<Student> {
     const result = await pool.query(
@@ -86,7 +97,7 @@ export class UserRepository {
 
     return result.rows[0];
   }
-
+  ,
   async updateStudent(
     id: number,
     data: UpdateStudentDTO
@@ -107,7 +118,7 @@ export class UserRepository {
     }
 
     if (data.email !== undefined) {
-      updates.push(`email = $${paramCount++}`);
+      updates.push(`mail = $${paramCount++}`);
       values.push(data.email);
     }
 
@@ -133,7 +144,7 @@ export class UserRepository {
 
     return result.rows[0] || null;
   }
-
+  ,
   async deactivateStudent(id: number): Promise<Student | null> {
     const result = await pool.query(
       `UPDATE users

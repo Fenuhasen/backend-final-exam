@@ -15,6 +15,12 @@ const SubmissionRepository = {
 
         return result;
     },
+    findByStudentAndExam(studentId: number, examId: number) {
+        return pool.query(
+            'SELECT id_submission FROM submissions WHERE id_student = $1 AND id_exam = $2',
+            [studentId, examId]
+        );
+    },
     findById(id: number){
         return pool.query('SELECT * FROM submissions WHERE id_submission = $1', [id]);
     },
