@@ -8,24 +8,6 @@ export interface Exam {
     createdAt: Date;
 }
 
-export interface Question {
-    questionId: number;
-    examId: number;
-    statement: string;
-    points: number;
-    position: number;
-}
-
-export interface Choice {
-    choiceId: number;
-    questionId: number;
-    text: string;
-    isCorrect: boolean;
-}
-
-export interface QuestionWithChoice extends Question {
-    choice: Choice[];
-}
 
 export interface Submission {
     submissionId: number;

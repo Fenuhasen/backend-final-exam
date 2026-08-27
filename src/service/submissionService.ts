@@ -1,7 +1,5 @@
 import { Correction, CorrectionItem } from "../dto/CorrectionDto";
 import { SubmissionDTO } from "../dto/submissionDto";
-import { Question } from "../model/exam";
-import { examRepository } from "../repository/examRepository";
 import { questionRepository } from "../repository/questionRepository";
 import SubmissionItemRepository from "../repository/submissionItemRepository";
 import { SubmissionRepository } from "../repository/submissionRepository";
@@ -17,14 +15,14 @@ const SubmissionService = {
         }
 
         const questions = await questionRepository.findByExamWithChoices(examId);
-        const questionIds = new Set(questions.map((question) => question.questionId));
+        const ids = new Set(questions.map((question) => question.id));
         const seenQuestions = new Set<number>();
         for (const answer of answers) {
-            if (!questionIds.has(answer.question_id) || seenQuestions.has(answer.question_id)) {
+            if (!ids.has(answer.question_id) || seenQuestions.has(answer.question_id)) {
                 throw new Error("Invalid answers");
             }
-            const question = questions.find((item) => item.questionId === answer.question_id)!;
-            if (!question.choice.some((choice) => choice.choiceId === answer.choice_id)) {
+            const question = questions.find((item) => item.id === answer.question_id)!;
+            if (!question.choices.some((choice) => choice.id === answer.choice_id)) {
                 throw new Error("Invalid answers");
             }
             seenQuestions.add(answer.question_id);
@@ -122,31 +120,31 @@ const SubmissionService = {
         const list: CorrectionItem[] = [];
         const answerList = [...submission.answers].sort((a, b) => a.question_id - b.question_id);
         const questions = await questionRepository.findByExamWithChoices(submission.id_exam);
-        questions.sort((a, b) => a.questionId - b.questionId);
+        questions.sort((a, b) => a.id - b.id);
         for (const question of questions) {
 
             const studentAnswer = answerList.find(
-                answer => Number(answer.question_id) === question.questionId
+                answer => Number(answer.question_id) === question.id
             );
 
-            const correctAnswer = question.choice.find(
-                choice => choice.isCorrect
+            const correctAnswer = question.choices.find(
+                choice => choice.is_correct
             );
 
             if (!correctAnswer) {
                 throw new Error(
-                    `No correct answer found for question ${question.questionId}`
+                    `No correct answer found for question ${question.id}`
                 );
             }
 
             list.push({
-                question_id: question.questionId,
+                question_id: question.id,
                 statement: question.statement,
                 points: question.points,
                 student_choice_id: studentAnswer?.choice_id || null,
-                correct_choice_id: correctAnswer.choiceId,
+                correct_choice_id: correctAnswer.id,
                 is_correct:
-                    studentAnswer?.choice_id === correctAnswer.choiceId
+                    studentAnswer?.choice_id === correctAnswer.id
             });
         }
 

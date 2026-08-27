@@ -61,7 +61,7 @@ export class UserService {
   async createStudent(
     data: CreateStudentDTO,
     role: UserRole
-  ): Promise<Student> {
+  ): Promise<StudentDTO> {
 
     if (role !== UserRole.ADMIN) {
       throw new Error('Only admin can create students');
@@ -139,11 +139,11 @@ export class UserService {
 
   private validateStudentData(data: CreateStudentDTO): void {
 
-    if (!data.firstName?.trim()) {
+    if (!data.first_name?.trim()) {
       throw new Error('First name is required');
     }
 
-    if (!data.name?.trim()) {
+    if (!data.last_name?.trim()) {
       throw new Error('Last name is required');
     }
 

@@ -1,4 +1,5 @@
 import pool from '../config/db';
+import { StudentDTO } from '../dto/userDto';
 import {
   Student,
   CreateStudentDTO,
@@ -74,7 +75,7 @@ export const UserRepository = {
     return result.rows[0] || null;
   },
 
-  async createStudent(data: CreateStudentDTO): Promise<Student> {
+  async createStudent(data: CreateStudentDTO): Promise<StudentDTO> {
     const result = await pool.query(
       `INSERT INTO users (
         first_name,
@@ -88,8 +89,8 @@ export const UserRepository = {
       VALUES ($1, $2, $3, $4, 'ETUDIANT', 'ACTIF', NOW())
       RETURNING *`,
       [
-        data.firstName,
-        data.name,
+        data.first_name,
+        data.last_name,
         data.email,
         data.password
       ]

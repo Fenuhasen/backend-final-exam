@@ -1,41 +1,99 @@
 import pool from "../config/db";
 import { Exam } from "../model/exam";
-import { CreateExamInput, UpdateExamInput } from "../dto/examDto";
+import { CreateExamInput, ExamDto, UpdateExamInput } from "../dto/examDto";
 
-function mapExam(row: any): Exam {
+function mapExam(row: any): ExamDto {
     return {
-        examId: row.id_exam,
+        id: row.id_exam,
         title: row.title,
         description: row.description,
-        courseId: row.id_course,
-        startDate: row.start_date,
-        endDate: row.end_date,
-        createdAt: row.created_at,
+        starts_at: row.start_date,
+        ends_at: row.end_date,
+
+        course: {
+            id: row.id_course,
+            code: row.code,
+            name: row.name
+        },
+
+        question_count: Number(row.question_count),
+        attempt_count: Number(row.attempt_count)
     };
 }
 
 export const examRepository = {
-    async findAll(): Promise<Exam[]> {
-        const result = await pool.query(`SELECT * FROM exams ORDER BY start_date DESC`);
+    async findAll(): Promise<ExamDto[]> {
+
+        const result = await pool.query(`
+        SELECT
+            e.id_exam,
+            e.title,
+            e.description,
+            e.start_date,
+            e.end_date,
+
+            c.id_course,
+            c.code,
+            c.name,
+
+            COUNT(DISTINCT q.id_question) AS question_count,
+            COUNT(DISTINCT s.id_submission) AS attempt_count
+
+        FROM exams e
+
+        JOIN courses c
+            ON c.id_course = e.id_course
+
+        LEFT JOIN questions q
+            ON q.id_exam = e.id_exam
+
+        LEFT JOIN submissions s
+            ON s.id_exam = e.id_exam
+
+        GROUP BY
+            e.id_exam,
+            c.id_course
+
+        ORDER BY e.start_date DESC
+    `);
+
         return result.rows.map(mapExam);
     },
 
-    async findById(examId: number): Promise<Exam | null> {
-        const result = await pool.query(`SELECT * FROM exams WHERE id_exam = $1`, [examId]);
+    async findById(examId: number): Promise<ExamDto | null> {
+        const result = await pool.query(`
+            SELECT
+                e.id_exam,
+                e.title,
+                e.description,
+                e.start_date,
+                e.end_date,
+                c.id_course,
+                c.code,
+                c.name,
+                COUNT(DISTINCT q.id_question) AS question_count,
+                COUNT(DISTINCT s.id_submission) AS attempt_count
+            FROM exams e
+            JOIN courses c ON c.id_course = e.id_course
+            LEFT JOIN questions q ON q.id_exam = e.id_exam
+            LEFT JOIN submissions s ON s.id_exam = e.id_exam
+            WHERE e.id_exam = $1
+            GROUP BY e.id_exam, c.id_course
+        `, [examId]);
         return result.rows[0] ? mapExam(result.rows[0]) : null;
     },
 
-    async create(data: CreateExamInput): Promise<Exam> {
+    async create(data: CreateExamInput): Promise<ExamDto> {
         const result = await pool.query(
             `INSERT INTO exams (title, description, id_course, start_date, end_date)
              VALUES ($1, $2, $3, $4, $5)
                  RETURNING *`,
-            [data.title, data.description || "", data.courseId, data.startDate, data.endDate]
+            [data.title, data.description || "", data.course_id, data.starts_at, data.ends_at]
         );
         return mapExam(result.rows[0]);
     },
 
-    async update(examId: number, data: UpdateExamInput): Promise<Exam | null> {
+    async update(examId: number, data: UpdateExamInput): Promise<ExamDto | null> {
         const result = await pool.query(
             `UPDATE exams SET
                               title = COALESCE($2, title),
@@ -45,7 +103,7 @@ export const examRepository = {
                               end_date = COALESCE($6, end_date)
              WHERE id_exam = $1
                  RETURNING *`,
-            [examId, data.title, data.description, data.courseId, data.startDate, data.endDate]
+            [examId, data.title, data.description, data.course_id, data.starts_at, data.ends_at]
         );
         return result.rows[0] ? mapExam(result.rows[0]) : null;
     },

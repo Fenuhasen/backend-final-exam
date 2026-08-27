@@ -1,16 +1,16 @@
 export interface CreateExamInput {
-    courseId: number;
+    course_id: number;
     title: string;
     description?: string;
-    startDate: string;
-    endDate: string;
+    starts_at: string;
+    ends_at: string;
 }
 
 export type UpdateExamInput = Partial<CreateExamInput>;
 
 export interface CreateChoiceInput {
     text: string;
-    isCorrect: boolean;
+    is_correct: boolean;
 }
 
 export interface CreateQuestionInput {

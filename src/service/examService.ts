@@ -6,10 +6,10 @@ import { Result, Result_item } from "../dto/resultsDto";
 import pool from "../config/db";
 import { SubmissionRepository } from "../repository/submissionRepository";
 
-function computeWindowStatus(exam: Exam): ExamWindowStatus {
+function computeWindowStatus(exam: ExamDto): ExamWindowStatus {
     const now = new Date();
-    if (now < exam.startDate) return "upcoming";
-    if (now >= exam.endDate) return "closed";
+    if (now < exam.starts_at) return "upcoming";
+    if (now >= exam.ends_at) return "closed";
     return "open";
 }
 
@@ -24,28 +24,28 @@ export const examService = {
             const questionCount = await pool
                 .query(
                     "SELECT COUNT(*) FROM questions WHERE id_exam = $1",
-                    [exam.examId]
+                    [exam.id]
                 )
                 .then((r) => Number(r.rows[0].count));
 
             const attemptCount = await pool
                 .query(
                     "SELECT COUNT(*) FROM submissions WHERE id_exam = $1",
-                    [exam.examId]
+                    [exam.id]
                 )
                 .then((r) => Number(r.rows[0].count));
 
             const course = await pool.query(
                 "SELECT id_course, code, name FROM courses WHERE id_course = $1",
-                [exam.courseId]
+                [exam.course.id]
             );
 
             result.push({
-                id: exam.examId,
+                id: exam.id,
                 title: exam.title,
                 description: exam.description,
-                starts_at: exam.startDate,
-                ends_at: exam.endDate,
+                starts_at: exam.starts_at,
+                ends_at: exam.ends_at,
 
                 course: {
                     id: course.rows[0].id_course,
@@ -60,22 +60,22 @@ export const examService = {
 
         return result;
     },
-    async getByIdForAdmin(examId: number) {
-        const exam = await examRepository.findById(examId);
-        const questions = await questionRepository.findByExamWithChoices(examId);
+    async getByIdForAdmin(id: number) {
+        const exam = await examRepository.findById(id);
+        const questions = await questionRepository.findByExamWithChoices(id);
         return { ...exam, questions };
     },
 
-    async create(input: CreateExamInput): Promise<Exam> {
+    async create(input: CreateExamInput): Promise<ExamDto> {
         return examRepository.create(input);
     },
 
-    async update(examId: number, input: UpdateExamInput): Promise<Exam | null> {
-        return examRepository.update(examId, input);
+    async update(id: number, input: UpdateExamInput): Promise<ExamDto | null> {
+        return examRepository.update(id, input);
     },
 
-    async delete(examId: number): Promise<void> {
-        await examRepository.delete(examId);
+    async delete(id: number): Promise<void> {
+        await examRepository.delete(id);
     },
 
     async listWithWindowStatus(studentId?: number) {
@@ -83,15 +83,15 @@ export const examService = {
         const available = [];
         for (const exam of exams) {
             if (computeWindowStatus(exam) !== "open") continue;
-            if (studentId !== undefined && (await SubmissionRepository.findByStudentAndExam(studentId, exam.examId)).rows.length > 0) continue;
-            const questions = await questionRepository.findByExam(exam.examId);
-            const course = await pool.query("SELECT code, name FROM courses WHERE id_course = $1", [exam.courseId]);
+            if (studentId !== undefined && (await SubmissionRepository.findByStudentAndExam(studentId, exam.id)).rows.length > 0) continue;
+            const questions = await questionRepository.findByExam(exam.id);
+            const course = await pool.query("SELECT code, name FROM courses WHERE id_course = $1", [exam.course.id]);
             available.push({
-                id: exam.examId,
+                id: exam.id,
                 title: exam.title,
                 course: { code: course.rows[0].code, name: course.rows[0].name },
                 description: exam.description,
-                ends_at: exam.endDate,
+                ends_at: exam.ends_at,
                 question_count: questions.length,
                 total_points: questions.reduce((sum, question) => sum + question.points, 0)
             });
@@ -99,21 +99,21 @@ export const examService = {
         return available;
     },
 
-    async getForStudentToTake(examId: number) {
-        const exam = await examRepository.findById(examId);
-        const questions = await questionRepository.findByExamWithChoices(examId);
+    async getForStudentToTake(id: number) {
+        const exam = await examRepository.findById(id);
+        const questions = await questionRepository.findByExamWithChoices(id);
 
         return {
-            examId: exam?.examId,
+            id: exam?.id,
             title: exam?.title,
             description: exam?.description,
-            startDate: exam?.startDate,
-            endDate: exam?.endDate,
+            starts_at: exam?.starts_at,
+            ends_at: exam?.ends_at,
             questions: questions.map((q) => ({
-                questionId: q.questionId,
+                questionId: q.id,
                 statement: q.statement,
                 points: q.points,
-                choice: q.choice.map((c) => ({ choiceId: c.choiceId, text: c.text })),
+                choice: q.choices.map((c) => ({ choiceId: c.id, text: c.text })),
             })),
         };
     },
@@ -158,7 +158,7 @@ export const examService = {
 
     return {
         exam: {
-            id: exam.examId,
+            id: exam.id,
             title: exam.title
         },
         total_points,
