@@ -1,0 +1,145 @@
+import pool from "../config/db";
+import { Exam } from "../model/exam";
+import { CreateExamInput, ExamDto, UpdateExamInput } from "../dto/examDto";
+
+function mapExam(row: any): ExamDto {
+    return {
+        id: row.id_exam,
+        title: row.title,
+        description: row.description,
+        starts_at: row.start_date,
+        ends_at: row.end_date,
+
+        course: {
+            id: row.id_course,
+            code: row.code,
+            name: row.name
+        },
+
+        question_count: Number(row.question_count),
+        attempt_count: Number(row.attempt_count)
+    };
+}
+
+export const examRepository = {
+    async findAll(): Promise<ExamDto[]> {
+
+        const result = await pool.query(`
+        SELECT
+            e.id_exam,
+            e.title,
+            e.description,
+            e.start_date,
+            e.end_date,
+
+            c.id_course,
+            c.code,
+            c.name,
+
+            COUNT(DISTINCT q.id_question) AS question_count,
+            COUNT(DISTINCT s.id_submission) AS attempt_count
+
+        FROM exams e
+
+        JOIN courses c
+            ON c.id_course = e.id_course
+
+        LEFT JOIN questions q
+            ON q.id_exam = e.id_exam
+
+        LEFT JOIN submissions s
+            ON s.id_exam = e.id_exam
+
+        GROUP BY
+            e.id_exam,
+            c.id_course
+
+        ORDER BY e.start_date DESC
+    `);
+
+        return result.rows.map(mapExam);
+    },
+
+    async findById(examId: number): Promise<ExamDto | null> {
+        const result = await pool.query(`
+            SELECT
+                e.id_exam,
+                e.title,
+                e.description,
+                e.start_date,
+                e.end_date,
+                c.id_course,
+                c.code,
+                c.name,
+                COUNT(DISTINCT q.id_question) AS question_count,
+                COUNT(DISTINCT s.id_submission) AS attempt_count
+            FROM exams e
+            JOIN courses c ON c.id_course = e.id_course
+            LEFT JOIN questions q ON q.id_exam = e.id_exam
+            LEFT JOIN submissions s ON s.id_exam = e.id_exam
+            WHERE e.id_exam = $1
+            GROUP BY e.id_exam, c.id_course
+        `, [examId]);
+        return result.rows[0] ? mapExam(result.rows[0]) : null;
+    },
+
+    async create(data: CreateExamInput): Promise<ExamDto> {
+        const result = await pool.query(
+            `INSERT INTO exams (title, description, id_course, start_date, end_date)
+             VALUES ($1, $2, $3, $4, $5)
+                 RETURNING *`,
+            [data.title, data.description || "", data.course_id, data.starts_at, data.ends_at]
+        );
+        return mapExam(result.rows[0]);
+    },
+
+    async update(examId: number, data: UpdateExamInput): Promise<ExamDto | null> {
+        const result = await pool.query(
+            `UPDATE exams SET
+                              title = COALESCE($2, title),
+                              description = COALESCE($3, description),
+                              id_course = COALESCE($4, id_course),
+                              start_date = COALESCE($5, start_date),
+                              end_date = COALESCE($6, end_date)
+             WHERE id_exam = $1
+                 RETURNING *`,
+            [examId, data.title, data.description, data.course_id, data.starts_at, data.ends_at]
+        );
+        return result.rows[0] ? mapExam(result.rows[0]) : null;
+    },
+
+    async delete(examId: number): Promise<void> {
+        await pool.query(`DELETE FROM exams WHERE id_exam = $1`, [examId]);
+    },
+
+    async countSubmissions(examId: number): Promise<number> {
+        const result = await pool.query(
+            `SELECT id_submission FROM submissions WHERE id_exam = $1`,
+            [examId]
+        );
+        return result.rows.length;
+    },
+    async findStudentResults(studentId: number) {
+        return pool.query(
+            `SELECT s.id_exam,
+                    e.title,
+                    c.code AS course_code,
+                    COALESCE(SUM(CASE WHEN ch.is_correct THEN q.points ELSE 0 END), 0) AS score,
+                    COALESCE((SELECT SUM(points) FROM questions WHERE id_exam = e.id_exam), 0) AS total_points,
+                    s.submitted_at
+             FROM submissions s
+             JOIN exams e ON e.id_exam = s.id_exam
+             JOIN courses c ON c.id_course = e.id_course
+             LEFT JOIN submission_items si ON si.id_submission = s.id_submission
+             LEFT JOIN choices ch ON ch.id_choice = si.id_choice
+             LEFT JOIN questions q ON q.id_question = si.id_question
+             WHERE s.id_student = $1
+             GROUP BY s.id_submission, s.id_exam, e.title, c.code, e.id_exam, s.submitted_at
+             ORDER BY s.submitted_at DESC`,
+            [studentId]
+        );
+    },
+    async getQuestionById(id: number) {
+        return pool.query('SELECT * FROM Questions WHERE id_question = $1', [id]);
+    }
+};

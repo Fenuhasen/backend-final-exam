@@ -1,0 +1,59 @@
+export interface CreateExamInput {
+    course_id: number;
+    title: string;
+    description?: string;
+    starts_at: string;
+    ends_at: string;
+}
+
+export type UpdateExamInput = Partial<CreateExamInput>;
+
+export interface CreateChoiceInput {
+    text: string;
+    is_correct: boolean;
+}
+
+export interface CreateQuestionInput {
+    statement: string;
+    points: number;
+    choices: CreateChoiceInput[];
+}
+
+export interface SubmitAnswerInput {
+    questionId: number;
+    choiceId: number | null;
+}
+
+export interface SubmitExamInput {
+    answers: SubmitAnswerInput[];
+}
+
+export interface ExamDto {
+    id: number,
+    title: string,
+    description: string,
+    starts_at: Date,
+    ends_at: Date,
+    course: {
+        id: number,
+        code: string,
+        name: string
+    },
+    question_count: number,
+    attempt_count: number
+}
+
+export interface Question {
+    id: number,
+    exam_id: number,
+    statement: string,
+    points: number,
+    position: number,
+    choices: Choice[]
+}
+
+export interface Choice {
+    id: number,
+    text: string,
+    is_correct: boolean
+}

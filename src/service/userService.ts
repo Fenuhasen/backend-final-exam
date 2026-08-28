@@ -1,24 +1,36 @@
+import bcrypt from 'bcrypt';
 import { UserRepository } from '../repository/userRepository';
 import {
-  Student,
   CreateStudentDTO,
   UpdateStudentDTO,
   UserRole
 } from '../model/user';
+import { StudentDTO } from '../dto/userDto';
 
 export class UserService {
 
-  private userRepository: UserRepository;
+  private userRepository = UserRepository;
 
   constructor() {
-    this.userRepository = new UserRepository();
   }
 
-  async getAllStudents(): Promise<Student[]> {
-    return this.userRepository.findStudents();
+  async getAllStudents(): Promise<StudentDTO[]> {
+    const result: StudentDTO[] = [];
+    (await this.userRepository.findStudents()).forEach(student => {
+      result.push(
+        {
+          id: student.id_user,
+          name: `${student.first_name}  ${student.name}`,
+          email: student.email,
+          is_active: student.status == "ACTIF",
+          created_at: student.created_at
+        }
+      )
+    });
+    return result;
   }
 
-  async getStudentById(id: number): Promise<Student> {
+  async getStudentById(id: number): Promise<StudentDTO> {
     if (id <= 0) {
       throw new Error('Invalid student ID');
     }
@@ -30,7 +42,13 @@ export class UserService {
     }
 
     if (student.role === UserRole.ETUDIANT) {
-      return student;
+      return {
+        id: student.id_user,
+        name: `${student.first_name}  ${student.name}`,
+        email: student.email,
+        is_active: student.status == "ACTIF",
+        created_at: student.created_at
+      };
     }
 
     if (student.role === UserRole.ADMIN) {
@@ -43,7 +61,7 @@ export class UserService {
   async createStudent(
     data: CreateStudentDTO,
     role: UserRole
-  ): Promise<Student> {
+  ): Promise<StudentDTO> {
 
     if (role !== UserRole.ADMIN) {
       throw new Error('Only admin can create students');
@@ -58,14 +76,19 @@ export class UserService {
       throw new Error('Email already exists');
     }
 
-    return this.userRepository.createStudent(data);
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    return this.userRepository.createStudent({
+      ...data,
+      password: hashedPassword
+    });
   }
 
   async updateStudent(
     id: number,
     data: UpdateStudentDTO,
     role: UserRole
-  ): Promise<Student> {
+  ): Promise<StudentDTO> {
 
     if (role !== UserRole.ADMIN) {
       throw new Error('Only admin can update students');
@@ -86,8 +109,15 @@ export class UserService {
       }
     }
 
+    const dataToUpdate = data.password === undefined
+      ? data
+      : {
+          ...data,
+          password: await bcrypt.hash(data.password, 10)
+        };
+
     const updated =
-      await this.userRepository.updateStudent(id, data);
+      await this.userRepository.updateStudent(id, dataToUpdate);
 
     if (!updated) {
       throw new Error('Student not found');
@@ -99,7 +129,7 @@ export class UserService {
   async deleteStudent(
     id: number,
     role: UserRole
-  ): Promise<void> {
+  ): Promise<StudentDTO> {
 
     if (role !== UserRole.ADMIN) {
       throw new Error('Only admin can deactivate students');
@@ -111,21 +141,31 @@ export class UserService {
 
     await this.getStudentById(id);
 
-    const student =
-      await this.userRepository.deactivateStudent(id);
+    const currentStudent = await this.userRepository.findById(id);
+
+    if (!currentStudent) {
+      throw new Error('Student not found');
+    }
+
+    const student = await this.userRepository.toggleStudentStatus(
+      id,
+      currentStudent.status
+    );
 
     if (!student) {
       throw new Error('Student not found');
     }
+
+    return student;
   }
 
   private validateStudentData(data: CreateStudentDTO): void {
 
-    if (!data.firstName?.trim()) {
+    if (!data.first_name?.trim()) {
       throw new Error('First name is required');
     }
 
-    if (!data.name?.trim()) {
+    if (!data.last_name?.trim()) {
       throw new Error('Last name is required');
     }
 

@@ -3,6 +3,12 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import pool from './config/db';
 import userRouter from './router/userRouter'
+import submissionRouter from './router/submissionRouter';
+import courseController from './controller/courseController';
+import examRouter from './router/examRoutes'
+import myRouter from './router/myRouter'
+import authRouter from './router/authRouter'
+import { errorHandler, notFoundHandler } from './middleware/errorMiddleware';
 
 dotenv.config();
 
@@ -11,8 +17,12 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use ('/students', userRouter)
-
+app.use('/api/auth', authRouter);
+app.use('/api/submissions', submissionRouter);
+app.use('/api/exams', examRouter);
+app.use('/api/my', myRouter);
+app.use('/api/courses', courseController);
+app.use ('/api/students', userRouter)
 
 app.get('/', async (req: Request, res: Response) => {
   try {
@@ -23,6 +33,9 @@ app.get('/', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
+
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`[serveur]: Serveur démarré sur http://localhost:${PORT}`);
