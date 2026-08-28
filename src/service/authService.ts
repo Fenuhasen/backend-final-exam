@@ -1,3 +1,4 @@
+import bcrypt from "bcrypt";
 import { createToken } from "../config/auth";
 import { UserRepository } from "../repository/userRepository";
 
@@ -13,7 +14,8 @@ export const AuthService = {
         }
 
         const status = user.status.toString().toUpperCase();
-        if (!(status === "ACTIF" || status === "ACTIVE") || user.password !== password) {
+        const passwordMatches = await bcrypt.compare(password, user.password);
+        if (!(status === "ACTIF" || status === "ACTIVE") || !passwordMatches) {
             throw new Error("Email ou mot de passe incorrect");
         }
 

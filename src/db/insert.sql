@@ -1,2 +1,2 @@
 INSERT INTO users (first_name, last_name, mail, password, role, status) VALUES
-('Alice',   'Admin',  'alice.admin@test.com',             '123', 'ADMIN',    'ACTIF');
+('Alice',   'Admin',  'alice.admin@test.com',             '$2b$10$K01Pqkp6VQ2PYOevgXPjIeMFW6JKjT3ulreSpWw0mZWIPeJdpwQXq', 'ADMIN',    'ACTIF');

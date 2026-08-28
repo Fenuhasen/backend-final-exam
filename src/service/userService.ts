@@ -1,6 +1,6 @@
+import bcrypt from 'bcrypt';
 import { UserRepository } from '../repository/userRepository';
 import {
-  Student,
   CreateStudentDTO,
   UpdateStudentDTO,
   UserRole
@@ -76,14 +76,19 @@ export class UserService {
       throw new Error('Email already exists');
     }
 
-    return this.userRepository.createStudent(data);
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    return this.userRepository.createStudent({
+      ...data,
+      password: hashedPassword
+    });
   }
 
   async updateStudent(
     id: number,
     data: UpdateStudentDTO,
     role: UserRole
-  ): Promise<Student> {
+  ): Promise<StudentDTO> {
 
     if (role !== UserRole.ADMIN) {
       throw new Error('Only admin can update students');
@@ -104,8 +109,15 @@ export class UserService {
       }
     }
 
+    const dataToUpdate = data.password === undefined
+      ? data
+      : {
+          ...data,
+          password: await bcrypt.hash(data.password, 10)
+        };
+
     const updated =
-      await this.userRepository.updateStudent(id, data);
+      await this.userRepository.updateStudent(id, dataToUpdate);
 
     if (!updated) {
       throw new Error('Student not found');

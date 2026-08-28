@@ -87,7 +87,8 @@ export const UserRepository = {
         created_at
       )
       VALUES ($1, $2, $3, $4, 'ETUDIANT', 'ACTIF', NOW())
-      RETURNING *`,
+      RETURNING id_user as id, first_name || ' ' || last_name as name,
+            mail as email, status = 'ACTIF' as is_active, created_at`,
       [
         data.first_name,
         data.last_name,
@@ -102,7 +103,7 @@ export const UserRepository = {
   async updateStudent(
     id: number,
     data: UpdateStudentDTO
-  ): Promise<Student | null> {
+  ): Promise<StudentDTO | null> {
 
     const updates: string[] = [];
     const values: unknown[] = [];
@@ -129,7 +130,16 @@ export const UserRepository = {
     }
 
     if (updates.length === 0) {
-      return this.findById(id);
+      const student = await this.findById(id);
+      return student
+        ? {
+            id: student.id_user,
+            name: `${student.first_name} ${student.name}`,
+            email: student.email,
+            is_active: student.status === 'ACTIF',
+            created_at: student.created_at
+          }
+        : null;
     }
 
     values.push(id);
@@ -139,20 +149,22 @@ export const UserRepository = {
        SET ${updates.join(', ')}
        WHERE id_user = $${paramCount}
        AND role = 'ETUDIANT'
-       RETURNING *`,
+      RETURNING id_user as id, first_name || ' ' || last_name as name,
+            mail as email, status = 'ACTIF' as is_active, created_at`,
       values
     );
 
     return result.rows[0] || null;
   }
   ,
-  async deactivateStudent(id: number): Promise<Student | null> {
+  async deactivateStudent(id: number): Promise<StudentDTO | null> {
     const result = await pool.query(
       `UPDATE users
        SET status = 'DESACTIVE'
        WHERE id_user = $1
        AND role = 'ETUDIANT'
-       RETURNING *`,
+      RETURNING id_user as id, first_name || ' ' || last_name as name,
+           mail as email, status = 'ACTIF' as is_active, created_at`,
       [id]
     );
 
