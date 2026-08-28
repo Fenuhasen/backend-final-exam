@@ -129,7 +129,7 @@ export class UserService {
   async deleteStudent(
     id: number,
     role: UserRole
-  ): Promise<void> {
+  ): Promise<StudentDTO> {
 
     if (role !== UserRole.ADMIN) {
       throw new Error('Only admin can deactivate students');
@@ -141,12 +141,22 @@ export class UserService {
 
     await this.getStudentById(id);
 
-    const student =
-      await this.userRepository.deactivateStudent(id);
+    const currentStudent = await this.userRepository.findById(id);
+
+    if (!currentStudent) {
+      throw new Error('Student not found');
+    }
+
+    const student = await this.userRepository.toggleStudentStatus(
+      id,
+      currentStudent.status
+    );
 
     if (!student) {
       throw new Error('Student not found');
     }
+
+    return student;
   }
 
   private validateStudentData(data: CreateStudentDTO): void {

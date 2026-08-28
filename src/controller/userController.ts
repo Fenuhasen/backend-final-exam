@@ -205,10 +205,13 @@ export class UserController {
 
       const role = (req as AuthenticatedRequest).user?.role as UserRole;
 
-      await this.userService.deleteStudent(id, role);
+      const student = await this.userService.deleteStudent(id, role);
 
       res.status(200).json({
-        message: 'Student deactivated successfully'
+        message: student.is_active
+          ? 'Student activated successfully'
+          : 'Student deactivated successfully',
+        student
       });
 
     } catch (error) {

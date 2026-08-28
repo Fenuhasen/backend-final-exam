@@ -133,12 +133,12 @@ export const UserRepository = {
       const student = await this.findById(id);
       return student
         ? {
-            id: student.id_user,
-            name: `${student.first_name} ${student.name}`,
-            email: student.email,
-            is_active: student.status === 'ACTIF',
-            created_at: student.created_at
-          }
+          id: student.id_user,
+          name: `${student.first_name} ${student.name}`,
+          email: student.email,
+          is_active: student.status === 'ACTIF',
+          created_at: student.created_at
+        }
         : null;
     }
 
@@ -157,15 +157,18 @@ export const UserRepository = {
     return result.rows[0] || null;
   }
   ,
-  async deactivateStudent(id: number): Promise<StudentDTO | null> {
+  async toggleStudentStatus(
+    id: number,
+    currentStatus: string
+  ): Promise<StudentDTO | null> {
     const result = await pool.query(
       `UPDATE users
-       SET status = 'DESACTIVE'
-       WHERE id_user = $1
+       SET status = $1
+      WHERE id_user = $2
        AND role = 'ETUDIANT'
       RETURNING id_user as id, first_name || ' ' || last_name as name,
            mail as email, status = 'ACTIF' as is_active, created_at`,
-      [id]
+      [currentStatus === 'ACTIF' ? 'DESACTIVE' : 'ACTIF', id]
     );
 
     return result.rows[0] || null;
